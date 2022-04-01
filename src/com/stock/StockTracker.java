@@ -26,13 +26,21 @@ public class StockTracker {
                 case 's':
                     System.out.println("Starting sell stock process:");
                     Stock stockSell = collectStockInfo();
-                    account.sellStock(stockSell);
+                    try {
+                        account.sellStock(stockSell);
+                    } catch (StockException e) {
+                        e.printStackTrace();
+                    }
                     printAccountSummary(account);
                     break;
                 case 'b':
                     System.out.println("Starting buy stock process:");
                     Stock stock = collectStockInfo();
-                    account.buyStock(stock);
+                    try {
+                        account.buyStock(stock);
+                    } catch (StockException e) {
+                        e.printStackTrace();
+                    }
                     System.out.println();
                     printAccountSummary(account);
                     break;
