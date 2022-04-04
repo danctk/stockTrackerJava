@@ -1,7 +1,10 @@
 package com.stock;
 
-public class Stock {
+import javax.sql.rowset.serial.SerialArray;
+import java.io.Serializable;
 
+public class Stock implements Serializable {
+    private static final int serialVersionUID = 1;
     private String stockSymbol;
     private int shares;
     private double price;

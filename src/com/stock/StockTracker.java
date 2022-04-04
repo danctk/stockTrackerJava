@@ -1,19 +1,41 @@
 package com.stock;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.Scanner;
 
 
 public class StockTracker {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws StockException {
         Scanner scan = new Scanner(System.in);
        char action = 'x';
 
+        StockAccount account = null;
         printIntro();
-        StockAccount account = collectAccountInfo();
+        try{
+            StockFileManager stockFileManager = new StockFileManager();
+            account =  stockFileManager.getStoredAccount();
+        }
+        catch ( NullPointerException e) {
+            System.out.println("No file found, collecting new user");
+
+        }
+        if(account == null) {
+            System.out.println("No file found, collecting new user");
+            account = collectAccountInfo();
+            continueOperation(scan, action, account);
+        } else {
+            continueOperation(scan, action, account);
+
+        }
+
+    }
+
+    private static void continueOperation(Scanner scan, char action, StockAccount account) {
         printAccountSummary(account);
         System.out.println();
 
-        while(action != 'q') {
+        while (action != 'q') {
             System.out.println("What do you want to do?");
             System.out.println("b = buy");
             System.out.println("s = sell");
@@ -22,14 +44,21 @@ public class StockTracker {
             switch (action) {
                 case 'q':
                     System.out.println("you've selected quit");
+                    try {
+
+                        StockFileManager.storeAccountInfo(account);
+                    } catch (StockException se) {
+                        System.out.println("an exception occured");
+                        se.printStackTrace();
+                    }
                     break;
                 case 's':
                     System.out.println("Starting sell stock process:");
                     Stock stockSell = collectStockInfo();
                     try {
                         account.sellStock(stockSell);
-                    } catch (StockException e) {
-                        e.printStackTrace();
+                    } catch (StockException se) {
+                        se.printStackTrace();
                     }
                     printAccountSummary(account);
                     break;
@@ -38,8 +67,8 @@ public class StockTracker {
                     Stock stock = collectStockInfo();
                     try {
                         account.buyStock(stock);
-                    } catch (StockException e) {
-                        e.printStackTrace();
+                    } catch (StockException se) {
+                        se.printStackTrace();
                     }
                     System.out.println();
                     printAccountSummary(account);
@@ -49,10 +78,9 @@ public class StockTracker {
                     break;
             }
         }
-       System.out.println("exiting...");
+        System.out.println("exiting...");
         printAccountSummary(account);
     }
-
 
 
     private static StockAccount collectAccountInfo() {
@@ -69,9 +97,14 @@ public class StockTracker {
     private static void printAccountSummary(StockAccount account) {
             System.out.println(("Account name: " + account.getFullName()));
             System.out.println("your balance is : $" + account.getBalance());
-            Stock stockRef =  account.getStock();
-
-            System.out.println("You own this stock:" + stockRef.toString());
+            Collection<Stock> stockRef =  account.getStock();
+            if( stockRef.isEmpty()){
+                System.out.println("You currently don't own any stocks" );
+            } else {
+                for (Object o : stockRef) {
+                    System.out.println("You own this stock:" + o.toString());
+                }
+            }
     }
     private static Stock collectStockInfo() {
 

@@ -1,9 +1,101 @@
 package com.stock;
 
-import java.util.Scanner;
+import java.io.Serializable;
+import java.util.*;
 
-public class StockAccount {
-    Stock stockRef = new Stock();
+public class StockAccount implements Serializable {
+    private static final int serialVersionUID = 1;
+    private SortedMap<String, Stock> stockRef = new SortedMap<String, Stock>() {
+        @Override
+        public Comparator<? super String> comparator() {
+            return null;
+        }
+
+        @Override
+        public SortedMap<String, Stock> subMap(String fromKey, String toKey) {
+            return null;
+        }
+
+        @Override
+        public SortedMap<String, Stock> headMap(String toKey) {
+            return null;
+        }
+
+        @Override
+        public SortedMap<String, Stock> tailMap(String fromKey) {
+            return null;
+        }
+
+        @Override
+        public String firstKey() {
+            return null;
+        }
+
+        @Override
+        public String lastKey() {
+            return null;
+        }
+
+        @Override
+        public Set<String> keySet() {
+            return null;
+        }
+
+        @Override
+        public Collection<Stock> values() {
+            return null;
+        }
+
+        @Override
+        public Set<Entry<String, Stock>> entrySet() {
+            return null;
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return false;
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            return false;
+        }
+
+        @Override
+        public Stock get(Object key) {
+            return null;
+        }
+
+        @Override
+        public Stock put(String key, Stock value) {
+            return null;
+        }
+
+        @Override
+        public Stock remove(Object key) {
+            return null;
+        }
+
+        @Override
+        public void putAll(Map<? extends String, ? extends Stock> m) {
+
+        }
+
+        @Override
+        public void clear() {
+
+        }
+    };
     private String fullName;
     private double balance;
     static final double STARTING_BALANCE = 1000;
@@ -12,119 +104,132 @@ public class StockAccount {
         super();
         this.fullName = fullName;
         this.balance = balance;
+        stockRef = new TreeMap<>();
     }
 
-    public Stock getStock() {
+    public Collection<Stock> getStock() {
 
-        return stockRef;
+        return stockRef.values();
     }
 
     public void sellStock(Stock soldStock) throws StockException {
-        if (soldStock.getStockSymbol().equals(stockRef.getStockSymbol())) {
-          try {
-              if (soldStock.getShares() <= stockRef.getShares()) {
-                  stockRef.setShares(stockRef.getShares() - soldStock.getShares());
-                  stockRef.setPrice(soldStock.getPrice());
-                  this.balance += (soldStock.getShares() * soldStock.getPrice());
-              } else {
-throw new StockException("You do not have enough shares of this stock");
-              }
-          }catch(StockException e) {
-              System.out.println(e.getMessage());
-              System.out.println("you have " + stockRef.getShares() + " shares." +
-                      "would you like to sell all of your shares? (y/n)");
-              Scanner scan = new Scanner(System.in);
-              String answer = scan.nextLine();
-              if (answer.equals("y")) {
-                  this.balance += (stockRef.getShares() * soldStock.getPrice());
-                  stockRef.setShares(0);
-                  stockRef.setStockSymbol("");
-                  stockRef.setPrice(0);
-                  System.out.println("You've sold " + soldStock.getShares() + " shares of " +
-                          soldStock.getStockSymbol() + " at $" + soldStock.getPrice());
-              }
-          }
-        } else {
-            System.out.println("You do not own shares of this stock.");
+
+        try {
+
+            if (stockRef.isEmpty()) {
+                throw new StockException("You do not have any stocks");
+
+            } else {
+                Stock heldStock = stockRef.get(soldStock.getStockSymbol());
+                int heldShares = heldStock.getShares();
+                if (stockRef.get(soldStock.getStockSymbol()) != null) {
+                    if(soldStock.getShares() == heldShares) {
+                        this.balance += (heldShares * soldStock.getPrice());
+                        stockRef.remove(soldStock.getStockSymbol());
+                        System.out.println("You've sold " + soldStock.getShares() + " shares of " +
+                                soldStock.getStockSymbol() + " at $" + soldStock.getPrice());
+                    } else if (soldStock.getShares() < heldShares) {
+                        soldStock.setShares(heldStock.getShares() - soldStock.getShares());
+                        stockRef.put(soldStock.getStockSymbol(), soldStock);
+                        this.balance += (soldStock.getShares() * soldStock.getPrice());
+                    } else {
+                        throw new StockException("You do not have enough shares of this stock");
+                    }
+                }
+            }
+        } catch(StockException e) {
+
+            if (stockRef.get(soldStock.getStockSymbol()) == null) {
+                System.out.println(e.getMessage());
+            } else {
+                System.out.println(e.getMessage());
+                Stock heldStock = stockRef.get(soldStock.getStockSymbol());
+                int heldShares = heldStock.getShares();
+                System.out.println("you have " + heldStock.getShares() + " shares." +
+                        "would you like to sell all of your shares? (y/n)");
+                Scanner scan = new Scanner(System.in);
+                String answer = scan.nextLine();
+                if (answer.equals("y")) {
+                    this.balance += (heldShares * soldStock.getPrice());
+                    stockRef.remove(soldStock.getStockSymbol());
+                    System.out.println("You've sold " + soldStock.getShares() + " shares of " +
+                            soldStock.getStockSymbol() + " at $" + soldStock.getPrice());
+                }
+            }
+        }
         }
 
-    }
+
 
 
     public void buyStock(Stock stock) throws StockException {
 
         try {
-            if (stockRef.getShares() > 0 && (stock.getStockSymbol().equals(stockRef.getStockSymbol()))) {
+           if (stockRef.get(stock.getStockSymbol()) == null  ) {
 
-                if (stock.getPrice() * stock.getShares() > this.balance) {
-                    throw new StockException("cannot buy stock, insufficient balance.");
-                } else {
-                    this.balance -= (stock.getPrice() * stock.getShares());
-                    stock.setShares(stockRef.getShares() + stock.getShares());
-                    this.stockRef = stock;
-                    System.out.println("Purchased completed. ");
-                    System.out.println("You purchased: " + stock.getStockSymbol() + " :" + stock.getShares() +
-                            " shares at $" + stock.getPrice());
-                    System.out.println("Balance is at : " + this.balance);
-                }
-            } else if (stockRef.getShares() > 0) {
-                System.out.println("This is the wrong stock symbol. cannot track more than one stock atm.");
-            } else {
-                if (stock.getPrice() * stock.getShares() > this.balance) {
-                    throw new StockException("cannot buy stock, insufficient balance.");
+               if (stock.getPrice() * stock.getShares() > this.balance) {
+                   throw new StockException("cannot buy stock, insufficient balance.");
+               } else {
+                   this.balance -= (stock.getPrice() * stock.getShares());
+                   stock.setShares(stock.getShares());
+                   stockRef.put(stock.getStockSymbol(), stock);
+                   System.out.println("Purchased completed. ");
 
-                } else {
-                    this.balance -= (stock.getPrice() * stock.getShares());
-                    stock.setShares(stockRef.getShares() + stock.getShares());
-                    this.stockRef = stock;
-                    System.out.println("Purchased completed.");
-                    System.out.println("You purchased: " + stock.getStockSymbol() + " :" + stock.getShares() +
-                            " shares at $" + stock.getPrice());
-                    System.out.println("Balance is at : " + this.balance);
-                }
-            }
-        } catch(StockException e) {
+
+               }} else {
+                   if (stock.getPrice() * stock.getShares() > this.balance) {
+                       throw new StockException("cannot buy stock, insufficient balance.");
+
+                   } else {
+                       this.balance -= (stock.getPrice() * stock.getShares());
+                       Stock heldStock = stockRef.get(stock.getStockSymbol());
+                       int heldShares = heldStock.getShares();
+                       stock.setShares( heldShares + stock.getShares());
+                       stockRef.put(stock.getStockSymbol(), stock);
+                       System.out.println("Purchased completed.");
+
+                   }
+               }
+
+        } catch (StockException e) {
             System.out.println(e.getMessage());
             System.out.println("Would you like to buy as many shares as you can afford? (y/n)");
             Scanner scan = new Scanner(System.in);
             String answer = scan.nextLine();
             if (answer.equals("y")) {
-                stock.setShares(stockRef.getShares() + (int) (balance / stock.getPrice()));
-                this.stockRef = stock;
+                stock.setShares((int) (balance / stock.getPrice()));
+                stockRef.put(stock.getStockSymbol(), stock);
                 this.balance -= ((int) (balance / stock.getPrice()) * stock.getPrice());
                 System.out.println("Purchased completed.");
-                System.out.println("Stock: " + stock.getStockSymbol() + " :" + stock.getShares() +
-                        " shares at $" + stock.getPrice());
-                System.out.println("Balance is at : " + this.balance);
             } else {
                 System.out.println("Order Cancelled.");
             }
         }
-    }
+ }
 
     public StockAccount(String fullName) {
-        this(fullName, STARTING_BALANCE);
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double initialBalance) {
-        if (initialBalance <= 0) {
-            System.out.println("cannot set balance to that number, using default balance:");
-            balance = STARTING_BALANCE;
-        } else {
-            balance = initialBalance;
+            this(fullName, STARTING_BALANCE);
         }
-    }
 
-    public void setFullName(String setName) {
-        fullName = setName;
-    }
+        public String getFullName () {
+            return fullName;
+        }
 
-}
+        public double getBalance () {
+            return balance;
+        }
+
+        public void setBalance ( double initialBalance){
+            if (initialBalance <= 0) {
+                System.out.println("cannot set balance to that number, using default balance:");
+                balance = STARTING_BALANCE;
+            } else {
+                balance = initialBalance;
+            }
+        }
+
+        public void setFullName (String setName){
+            fullName = setName;
+        }
+
+    }
